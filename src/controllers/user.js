@@ -6,6 +6,12 @@ async function hash(password) {
     return await bcrypt.hash(password, 10);
 }
 
+export async function getSelfUserInfo(req, res) {
+    const user = req.user.toObject();
+    delete user.pwhash;
+    res.status(200).json(user);
+}
+
 export async function createUser(req, res) {
     const { email, password, name } = req.body;
     console.log(req.body)
