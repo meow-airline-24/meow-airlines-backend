@@ -1,5 +1,6 @@
 import User from "../models/users.js";
 import bcrypt from "bcryptjs";
+import HttpException from "../exceptions/HttpException.js";
 
 async function hash(password) {
   // https://stackoverflow.com/a/67052696/13680015
@@ -18,9 +19,13 @@ export async function createUser(req, res) {
   if (role === "admin" && req.user.role !== "admin") {
     throw new HttpException(403, "Only admins can create other admins.");
   }
-  
+
+  if (role != "admin" && role != "customer") {
+    throw new HttpException(409, "Invalid role.");
+  }
+
   if (await User.findOne({ email })) {
-    throw new HttpException(409, "Email already registered");
+    throw new HttpException(409, "Email already registered.");
   }
   const pwhash = await hash(password);
 
