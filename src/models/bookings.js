@@ -5,7 +5,9 @@ const BookingSchema = new Schema({
   flight_id: { type: ObjectId, ref: "Flight", required: true },
   booking_time: { type: Date, default: Date.now },
   status: { type: String, enum: ["confirmed", "canceled", "pending"], default: "pending" },
-  total_amount: { type: Number, required: true }
+  total_amount: { type: Number, required: true },
+  email: {type:String, required: true },
+  phone: {type:String, required: true }
 });
 
 const Booking = model("Booking", BookingSchema);
