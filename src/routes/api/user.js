@@ -5,7 +5,7 @@ import userMustHaveLoggedIn from "../../middleware/userMustHaveLoggedIn.js";
 
 const userRouter = Router();
 
-userRouter.post("/signup", CA(createUser));
+userRouter.post("/register", CA(createUser));
 
 userRouter.get("/info", CA(userMustHaveLoggedIn), CA(getSelfUserInfo));
 
