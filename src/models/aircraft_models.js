@@ -5,7 +5,13 @@ const AircraftModelSchema = new Schema({
   capacity: { type: Number, required: true },
   rows: { type: Number, required: true },
   columns: { type: Number, required: true },
-  manufacturer: { type: String, required: true }
+  manufacturer: { type: String, required: true },
+  class_info: [
+    {
+      class: { type: String, enum: ['Economy', 'Business', 'First'], required: true },
+      row_range: { type: String, required: true }
+    }
+  ]
 });
 
 const AircraftModel = model("AircraftModel", AircraftModelSchema);
