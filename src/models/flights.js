@@ -10,6 +10,7 @@ const FlightSchema = new Schema({
   book_exp: { type: Date, required: true },
   aircraft_id: { type: ObjectId, ref: "Aircraft" },
   available_seats: { type: Number, required: true },
+  base_price: { type: Number, required: true },
 });
 
 const Flight = model("Flight", FlightSchema);
