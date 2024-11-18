@@ -27,6 +27,27 @@ function generateAccessToken(user, expiresIn = DEBUG ? "15d" : "1d") {
   );
 }
 
+export async function logout(req, res) {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            throw new HttpException(400, "Refresh token is required");
+        }
+
+        // Invalidate the refresh token on the server
+        await RefreshToken.deleteOne({ token: refreshToken });
+
+        // Respond back to the client
+        return res.status(200).json({
+            message: "Successfully logged out"
+        });
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message });
+    }
+}
+
+
 function generateRefreshToken(user, expiresIn = "365d") {
   return jwt.sign(
     {
