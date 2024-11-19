@@ -1,10 +1,10 @@
 import express from "express"; // Use import instead of require
 import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
 import router from "./src/routes/index.js";
 
 import { DEBUG, MONGODB_URL, API_HOST, API_PORT } from "./env.js";
-
 
 try {
   await mongoose.connect(MONGODB_URL);
@@ -12,15 +12,15 @@ try {
 } catch (error) {
   console.log("ERROR: Could not connect to database.");
   if (DEBUG) {
-  console.log("MONGODB_URL =", MONGODB_URL);
+    console.log("MONGODB_URL =", MONGODB_URL);
   }
 }
-
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(router);
 
 app.get("/", (req, res) => {

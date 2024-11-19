@@ -1,11 +1,13 @@
 import { Router } from "express";
-
+import CA from "../../exceptions/catchAsync.js";
 import { login, refreshAccessToken, logout } from "../../controllers/auth.js";
 
 const authRouter = Router();
 
-authRouter.post("/login", login);
-authRouter.post("/logout", logout); // cái này chưa hiểu, hình như phải dùng refresh token
-authRouter.post("/refresh_access_token", refreshAccessToken);
+authRouter.post("/login", CA(login));
+
+authRouter.get("/logout", CA(logout));
+
+authRouter.get("/refresh_access_token", CA(refreshAccessToken));
 
 export default authRouter;

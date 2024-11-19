@@ -28,25 +28,31 @@ function generateAccessToken(user, expiresIn = DEBUG ? "15d" : "1d") {
 }
 
 export async function logout(req, res) {
-    try {
-        const { refreshToken } = req.body;
+  const { refreshToken } = req.cookies;
 
-        if (!refreshToken) {
-            throw new HttpException(400, "Refresh token is required");
-        }
+  if (!refreshToken) {
+    throw new HttpException(400, "No refresh token provided");
+  }
 
-        // Invalidate the refresh token on the server
-        await RefreshToken.deleteOne({ token: refreshToken });
+  // Remove the refresh token from the server-side storage
+  const tokenIndex = refreshTokens.indexOf(refreshToken);
+  if (tokenIndex === -1) {
+    throw new HttpException(403, "Invalid refresh token");
+  }
 
-        // Respond back to the client
-        return res.status(200).json({
-            message: "Successfully logged out"
-        });
-    } catch (error) {
-        res.status(error.status || 500).json({ message: error.message });
-    }
+  refreshTokens.splice(tokenIndex, 1); // Remove the refresh token
+
+  // Clear the refresh token cookie
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: false, // Change to true in production for HTTPS
+    path: "/",
+  });
+
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
 }
-
 
 function generateRefreshToken(user, expiresIn = "365d") {
   return jwt.sign(

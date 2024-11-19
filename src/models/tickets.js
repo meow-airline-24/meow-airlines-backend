@@ -9,7 +9,9 @@ const TicketSchema = new Schema({
   },
   passenger_name: { type: String, required: true },
   dob: { type: Date, required: true },
-  nin: { type: String, required: true },
+  gender: { type: Boolean, required: true },
+  id_type: { type: String, enum: ["nin", "passport"], required: true },
+  id_number: { type: String, required: true },
   country_code: { type: Number, required: true },
   seat_id: [{ type: ObjectId, ref: "Seat", required: true }],
 });
