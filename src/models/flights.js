@@ -1,6 +1,7 @@
 import { Schema, model, ObjectId } from "mongoose";
 
 const FlightSchema = new Schema({
+  id: {type: ObjectId, unique: true, required: true},
   flight_number: { type: String, unique: true, required: true },
   airline: { type: String, required: true },
   departure_airport: { type: String, required: true },
