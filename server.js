@@ -1,10 +1,16 @@
 import express from "express"; // Use import instead of require
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import router from "./src/routes/index.js";
 
 import { DEBUG, MONGODB_URL, API_HOST, API_PORT } from "./env.js";
+
+const corsOptions = {
+  origin: (DEBUG ? "*" : ["127.0.0.1", API_HOST]),
+  optionsSuccessStatus: 200
+};
 
 try {
   await mongoose.connect(MONGODB_URL);
@@ -18,6 +24,7 @@ try {
 
 const app = express();
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

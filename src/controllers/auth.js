@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/users.js";
-
+import HttpException from "../exceptions/HttpException.js";
 import { DEBUG } from "../../env.js";
 
 /**
@@ -73,7 +73,6 @@ const refreshTokens = [];
 
 export async function login(req, res) {
   const { email, password } = req.body;
-
   const user = await User.findOne({ email });
   if (!user) {
     throw new HttpException(404, "No user with such email address");
