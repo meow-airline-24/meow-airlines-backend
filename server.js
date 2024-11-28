@@ -2,6 +2,9 @@ import express from "express"; // Use import instead of require
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 
+// import cron from "node-cron";
+// import Flight from "./models/flight.js"; xóa Flight - cần k?
+
 import router from "./src/routes/index.js";
 
 import { DEBUG, MONGODB_URL, API_HOST, API_PORT } from "./env.js";
@@ -22,6 +25,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(router);
+
+// xóa flight hết hạn mỗi ngày
+// startFlightCleanupTask();
 
 app.get("/", (req, res) => {
   res.send("Hello World");

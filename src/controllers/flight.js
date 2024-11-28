@@ -1,6 +1,7 @@
 import Flight from "../models/flights.js";
 import HttpException from "../exceptions/HttpException.js";
 import User from "../models/users.js";
+// import cron from "node-cron";
 
 export async function createFlight(req, res) {
     const { flightId, flight_number, airline, departure_airport, 
@@ -109,3 +110,16 @@ export async function searchFlight(req, res) {
         res.status(error.status || 500).json({ message: error.message });
     }
 }
+
+// Xóa flight khi book_exp của nó hết hạn
+// export function startFlightCleanupTask() {
+//     cron.schedule("0 0 * * *", async () => {
+//         try {
+//             const now = new Date();
+//             const result = await Flight.deleteMany({ book_exp: { $lt: now } });
+//             console.log(`Deleted ${result.deletedCount} expired flights.`);
+//         } catch (error) {
+//             console.error("Error deleting expired flights:", error);
+//         }
+//     });
+// }
