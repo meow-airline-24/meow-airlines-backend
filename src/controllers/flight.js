@@ -2,18 +2,19 @@ import Flight from "../models/flights.js";
 import HttpException from "../exceptions/HttpException.js";
 import User from "../models/users.js";
 // import cron from "node-cron";
+import {mongoose, Types} from "mongoose"; // xử lý ObjectId
+import crypto from "crypto";
+
+function stringToObjectId(str) {
+    const hash = crypto.createHash('sha256').update(str).digest('hex');
+
+    // Use the first 24 characters of the hash directly to generate ObjectId
+    return new Types.ObjectId(hash.substring(0, 24));  // Use only the first 24 characters
+}
+
 
 export async function createFlight(req, res) {
-    const { flightId, flight_number, airline, departure_airport, 
-        arrival_airport, departure_time, arrival_time, aircraft_id } = req.body;
-    if (await User.findOne({flightId})) {
-        throw new HttpException(409, "Flight already registered.");
-    }
-    if (loggedInUser.role !== "admin") {
-        throw new HttpException(401, "Only admins can make new flights.")
-    }
-
-    let newFlight = await Flight.create({
+    const {
         flightId,
         flight_number,
         airline,
@@ -23,28 +24,72 @@ export async function createFlight(req, res) {
         arrival_time,
         book_exp,
         aircraft_id,
-    });
-    newFlight = newFlight.toObject();
+    } = req.body;
 
-    res.status(200).json(newFlight);
+    try {
+        // Convert flightId and aircraft_id into ObjectIds
+        const flightObjectId = flightId ? stringToObjectId(flightId) : new Types.ObjectId();
+        const aircraftObjectId = aircraft_id ? stringToObjectId(aircraft_id) : undefined;
+
+        console.log("Generated flight id:", flightObjectId); // Debugging log
+
+        const newFlight = await Flight.create({
+            id: flightObjectId,
+            flight_number,
+            airline,
+            departure_airport,
+            arrival_airport,
+            departure_time: departure_time ? new Date(departure_time) : null,
+            arrival_time: arrival_time ? new Date(arrival_time) : null,
+            book_exp: book_exp ? new Date(book_exp) : null,
+            aircraft_id: aircraftObjectId,
+        });
+
+        res.status(201).json(newFlight);
+    } catch (error) {
+        if (error.code === 11000) {
+            // Handle duplicate key error
+            const field = Object.keys(error.keyPattern || {}).join(", ");
+            return res.status(400).json({ error: `Duplicate value for ${field}` });
+        }
+
+        console.error("Error creating flight:", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
 }
 
 export async function getFlightInfoById(req, res) {
-    const { flightId } = req.params; // Use flightId to match the dynamic route segment
     try {
-        const flight = await Flight.findById(flightId);
+        const { flightId } = req.params;
+
+        if (!flightId || typeof flightId !== "string") {
+            throw new Error("Invalid flightId");
+        }
+
+        console.log("Received flightId:", flightId);
+        
+        // Convert flightId to ObjectId and log it
+        const flightObjectId = stringToObjectId(flightId);
+        console.log("Converted Flight ObjectId:", flightObjectId);
+        
+        // Try using findOne to bypass any potential issues with findById
+        const flight = await Flight.findOne({ id: flightObjectId });
+        
+        console.log("Retrieved flight:", flight);
 
         if (!flight) {
-            throw new HttpException(404, "Flight not found!");
+            return res.status(404).json({ error: "Flight not found!" });
         }
 
         res.status(200).json(flight);
     } catch (error) {
-        res.status(error.status || 500).json({ message: error.message });
+        console.error("Error fetching flight info:", error.message);
+        res.status(500).json({ error: error.message });
     }
 }
 
-export async function searchFlight(req, res) {
+
+export async function searchFlight(req, res) { //search flight
     const {
         departure_airport,
         arrival_airport,
@@ -111,7 +156,7 @@ export async function searchFlight(req, res) {
     }
 }
 
-// Xóa flight khi book_exp của nó hết hạn
+// Xóa flight khi book_exp của nó hết hạn 
 // export function startFlightCleanupTask() {
 //     cron.schedule("0 0 * * *", async () => {
 //         try {

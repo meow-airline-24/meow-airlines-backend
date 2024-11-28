@@ -1,3 +1,5 @@
 import express, { Router } from "express";
-const router = Router();
-export default router;
+const ticketRouter = Router();
+
+
+export default ticketRouter;
