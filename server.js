@@ -8,8 +8,9 @@ import router from "./src/routes/index.js";
 import { DEBUG, MONGODB_URL, API_HOST, API_PORT } from "./env.js";
 
 const corsOptions = {
-  origin: (DEBUG ? "*" : ["127.0.0.1", API_HOST]),
-  optionsSuccessStatus: 200
+  origin: DEBUG ? [/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/] : [API_HOST],
+  credentials: true,
+  optionsSuccessStatus: 200,
 };
 
 try {

@@ -12,7 +12,7 @@ function generateSalt() {
   return Date.now().toString() + (Math.random() * 19).toString();
 }
 
-function generateAccessToken(user, expiresIn = DEBUG ? "15d" : "1d") {
+function generateAccessToken(user, expiresIn = DEBUG ? "7d" : "1d") {
   return jwt.sign(
     {
       id: user._id,
@@ -54,7 +54,7 @@ export async function logout(req, res) {
   });
 }
 
-function generateRefreshToken(user, expiresIn = "365d") {
+function generateRefreshToken(user, expiresIn = "30d") {
   return jwt.sign(
     {
       id: user._id,
@@ -91,6 +91,8 @@ export async function login(req, res) {
     httpOnly: true,
     secure: false, // if true, HTTPS only
     path: "/",
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
   });
 
   res.status(200).json({
