@@ -40,41 +40,55 @@ export async function createUser(req, res) {
 }
 
 export async function updateUser(req, res) {
-  // nhớ login trước, đặt ở Header trường Key: Authorization và Value: Bearer <auth_token> xong có thể update email, pw, name
-  const { email, password, name } = req.body;
-
+  const { email, password, name, gender, id_type, id_number } = req.body;
   const loggedInUser = req.user;
 
-  // Update fields only if they are provided in the request body
-  if (email) {
-    // Check if the new email is already taken by another user
-    const existingUser = await User.findOne({ email });
-    if (
-      existingUser &&
-      existingUser._id.toString() !== loggedInUser._id.toString()
-    ) {
-      throw new HttpException(409, "Email already registered by another user");
+  // Validation rules for unique fields
+  const uniqueFields = [
+    { field: "email", error: "Email already registered by another user" },
+    { field: "id_number", error: "ID number already registered by another user" },
+  ];
+
+  for (const { field, error } of uniqueFields) {
+    if (req.body[field]) {
+      const existingUser = await User.findOne({ [field]: req.body[field] });
+      if (
+        existingUser &&
+        existingUser._id.toString() !== loggedInUser._id.toString()
+      ) {
+        throw new HttpException(409, error);
+      }
+      loggedInUser[field] = req.body[field];
     }
-    loggedInUser.email = email;
   }
 
+  // Special logic for password
   if (password) {
-    // Hash the new password before saving
     loggedInUser.pwhash = await hash(password);
   }
 
-  if (name) {
-    loggedInUser.name = name;
+  // General updates for other fields
+  const updatableFields = { name, gender, id_type };
+  for (const [key, value] of Object.entries(updatableFields)) {
+    if (value) {
+      loggedInUser[key] = value;
+    }
+  }
+
+  // Validation: If `id_type` is updated, `id_number` is required
+  if (id_type && !id_number) {
+    throw new HttpException(400, "Changing ID type requires a new ID number.");
   }
 
   await loggedInUser.save();
 
-  // Return the updated user details, excluding sensitive information (passworeds...)
+  // Return updated user details, excluding sensitive information
   const updatedUser = loggedInUser.toObject();
   delete updatedUser.pwhash;
 
   res.status(200).json(updatedUser);
 }
+
 
 export async function deleteUser(req, res) {
   try {
