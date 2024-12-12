@@ -2,27 +2,32 @@ import Seat from "../models/seats.js";
 import HttpException from "../exceptions/HttpException.js";
 import Flight from "../models/flights.js";
 
-export async function createSeatsForFlightId(req, res) { //temp, for testing searchFlight
-    const { id, flightId, seatNumber, class: seatClass, availability, price } = req.body;
-
-    if (await Flight.findOne({ id: flightId })) { 
-        if (await Seat.findOne({ id }) || await Seat.findOne({ seat_number: seatNumber })) {
-            throw new HttpException(409, "Seat already exists.");
-        }
-    } else {
-        throw new HttpException(404, "Flight not found.");
-    }
+export async function createSeatsForFlightId(req, res) {
+    const { flight_id, seat_number, class: seatClass, availability, price } = req.body;
 
     try {
+        // Check if the flight exists
+        const flight = await Flight.findById(flight_id);
+        if (!flight) {
+            throw new HttpException(404, "Flight not found.");
+        }
+
+        // Check if the seat already exists for this flight
+        const existingSeat = await Seat.findOne({ flight_id, seat_number });
+        if (existingSeat) {
+            throw new HttpException(409, "Seat with this number already exists for the flight.");
+        }
+
+        // Create a new seat
         const newSeat = await Seat.create({
-            flight_id: flightId, 
-            seat_number: seatNumber, 
+            flight_id,
+            seat_number,
             class: seatClass,
-            availability,
+            availability: availability ?? true, // Default to true if not provided
             price,
         });
 
-        res.status(201).json(newSeat);
+        return res.status(201).json(newSeat);
     } catch (error) {
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern || {}).join(", ");
@@ -30,6 +35,6 @@ export async function createSeatsForFlightId(req, res) { //temp, for testing sea
         }
 
         console.error("Error creating seat:", error);
-        throw new HttpException(500, error.message);
+        res.status(error.status || 500).json({ message: error.message });
     }
 }

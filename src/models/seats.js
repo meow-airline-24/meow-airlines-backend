@@ -12,5 +12,7 @@ const SeatSchema = new Schema({
   price: { type: Number, required: true },
 });
 
+SeatSchema.index({ flight_id: 1, seat_number: 1 }, { unique: true });
+
 const Seat = model("Seat", SeatSchema);
 export default Seat;

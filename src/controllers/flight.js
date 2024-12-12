@@ -8,7 +8,6 @@ import crypto from "crypto";
 
 export async function createFlight(req, res) {
     const {
-        id,
         flight_number,
         airline,
         departure_airport,
@@ -20,13 +19,13 @@ export async function createFlight(req, res) {
     } = req.body;
 
     try {
-        // Validate id and aircraft_id to ensure they are valid ObjectId formats
-        const flightId = id && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : new mongoose.Types.ObjectId();
-        const aircraftObjectId = aircraft_id && mongoose.Types.ObjectId.isValid(aircraft_id) ? new mongoose.Types.ObjectId(aircraft_id) : null;
+        // Validate aircraft_id if provided
+        const aircraftObjectId = aircraft_id && mongoose.Types.ObjectId.isValid(aircraft_id)
+            ? new mongoose.Types.ObjectId(aircraft_id)
+            : null;
 
-        // Create flight
+        // Create a new flight
         const newFlight = await Flight.create({
-            id: flightId,
             flight_number,
             airline,
             departure_airport,
@@ -48,6 +47,7 @@ export async function createFlight(req, res) {
         res.status(500).json({ error: "Internal server error." });
     }
 }
+
 
 
 export async function getFlightInfoById(req, res) {
@@ -80,7 +80,6 @@ export async function getFlightInfoById(req, res) {
     }
 }
 
-
 export async function searchFlight(req, res) {
     const {
         departure_airport,
@@ -88,16 +87,48 @@ export async function searchFlight(req, res) {
         departure_time,
         arrival_time,
         number_people,
-    } = req.query;
-
+    } = req.body;
+    
+    console.log(number_people + " of type: " + typeof(number_people))
+    
     try {
+
+        // Validate `number_people
+        if (number_people <= 0) {
+            throw new HttpException(400, "`number_people` must be a positive integer.");
+        }
+
         // Construct the flight query
         const query = {};
+
         if (departure_airport) query.departure_airport = departure_airport;
         if (arrival_airport) query.arrival_airport = arrival_airport;
-        if (departure_time) query.departure_date = { $gte: new Date(departure_time) };
-        if (arrival_time) query.arrival_date = { $lte: new Date(arrival_time) };
 
+        // Handle partial or full departure_time
+        if (departure_time) {
+            const departureStart = new Date(departure_time);
+            const departureEnd = new Date(departureStart);
+            departureEnd.setDate(departureEnd.getDate() + 1);
+
+            query.departure_time = {
+                $gte: departureStart,
+                $lt: departureEnd,
+            };
+        }
+
+        // Handle partial or full arrival_time
+        if (arrival_time) {
+            const arrivalStart = new Date(arrival_time);
+            const arrivalEnd = new Date(arrivalStart);
+            arrivalEnd.setDate(arrivalEnd.getDate() + 1);
+
+            query.arrival_time = {
+                $gte: arrivalStart,
+                $lt: arrivalEnd,
+            };
+        }
+
+        // Query matching flights
         const flights = await Flight.find(query);
 
         if (flights.length === 0) {
@@ -107,43 +138,35 @@ export async function searchFlight(req, res) {
         const results = [];
 
         for (const flight of flights) {
-            // Get all available seats for the flight, categorized by class
+            // Fetch available seats
             const seats = await Seat.find({
                 flight_id: flight._id,
-                availability: true
+                availability: true,
             });
 
-            // Initialize price arrays for each class: First, Business, Economy
-            let firstClassPrice = 0;
-            let businessClassPrice = 0;
-            let economyClassPrice = 0;
+            console.log(`Seats found for flight ${flight.flight_number}:`, seats.length);
 
-            // Separate seats by class
-            const firstClassSeats = seats.filter(seat => seat.class === 'First').sort((a, b) => a.price - b.price);
-            const businessClassSeats = seats.filter(seat => seat.class === 'Business').sort((a, b) => a.price - b.price);
-            const economyClassSeats = seats.filter(seat => seat.class === 'Economy').sort((a, b) => a.price - b.price);
+            const seatClasses = ["First", "Business", "Economy"];
+            const prices = {};
 
-            // Calculate total price for First Class
-            if (firstClassSeats.length >= parseInt(number_people, 10)) {
-                firstClassPrice = firstClassSeats.slice(0, parseInt(number_people, 10)).reduce((sum, seat) => sum + seat.price, 0);
+            // Calculate prices for each class
+            for (const seatClass of seatClasses) {
+                const classSeats = seats.filter(seat => seat.class === seatClass).sort((a, b) => a.price - b.price);
+
+                console.log("classSeats lenght: " + classSeats.length);
+
+                if (classSeats.length >= number_people) {
+                    prices[seatClass] = classSeats
+                        .slice(0, number_people)
+                        .reduce((sum, seat) => sum + seat.price, 0);
+                    console.log("aaa: " + prices[seatClass]);
+                } else {
+                    prices[seatClass] = null; // Not enough seats
+                }
+
+                console.log(`${seatClass} seats:`, classSeats.length, `Price:`, prices[seatClass]);
             }
 
-            // Calculate total price for Business Class
-            if (businessClassSeats.length >= parseInt(number_people, 10)) {
-                businessClassPrice = businessClassSeats.slice(0, parseInt(number_people, 10)).reduce((sum, seat) => sum + seat.price, 0);
-            }
-
-            // Calculate total price for Economy Class
-            if (economyClassSeats.length >= parseInt(number_people, 10)) {
-                economyClassPrice = economyClassSeats.slice(0, parseInt(number_people, 10)).reduce((sum, seat) => sum + seat.price, 0);
-            }
-
-            // If there aren't enough seats, set price to 0
-            if (firstClassPrice === 0) firstClassPrice = 0;
-            if (businessClassPrice === 0) businessClassPrice = 0;
-            if (economyClassPrice === 0) economyClassPrice = 0;
-
-            // Add the flight and its price array to the results
             results.push({
                 flight: {
                     id: flight._id,
@@ -156,17 +179,16 @@ export async function searchFlight(req, res) {
                     book_exp: flight.book_exp,
                     aircraft_id: flight.aircraft_id,
                 },
-                total_price: [firstClassPrice, businessClassPrice, economyClassPrice],
+                prices,
             });
         }
 
-        // Return the results
         return res.status(200).json({ flights: results });
     } catch (error) {
-        return res.status(error.status || 500).json({ message: error.message });
+        console.error("Error searching flights:", error);
+        res.status(error.status || 500).json({ message: error.message });
     }
 }
-
 
 
 
