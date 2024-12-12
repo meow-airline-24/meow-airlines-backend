@@ -17,7 +17,11 @@ export async function createFlight(req, res) {
         book_exp,
         aircraft_id,
     } = req.body;
-
+    if ("_id" in req.body) {
+        console.log("ass")
+        delete req.body._id;
+    }
+    
     try {
         // Validate aircraft_id if provided
         const aircraftObjectId = aircraft_id && mongoose.Types.ObjectId.isValid(aircraft_id)
@@ -37,9 +41,11 @@ export async function createFlight(req, res) {
         });
 
         res.status(201).json(newFlight);
+        console.log("Created flight:", newFlight);
     } catch (error) {
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern || {}).join(", ");
+            console.log(error)
             return res.status(400).json({ error: `Duplicate value for ${field}` });
         }
 
@@ -50,7 +56,7 @@ export async function createFlight(req, res) {
 
 
 
-export async function getFlightInfoById(req, res) {
+export async function getFlightInfoById(req, res) { // /flight/{flightId}
     try {
         const { flightId } = req.params;
 
@@ -60,12 +66,8 @@ export async function getFlightInfoById(req, res) {
 
         console.log("Received flightId:", flightId);
         
-        // Convert flightId to ObjectId and log it
-        const flightObjectId = stringToObjectId(flightId);
-        console.log("Converted Flight ObjectId:", flightObjectId);
-        
         // Try using findOne to bypass any potential issues with findById
-        const flight = await Flight.findOne({ id: flightObjectId });
+        const flight = await Flight.findOne({ _id: flightId });
         
         console.log("Retrieved flight:", flight);
 

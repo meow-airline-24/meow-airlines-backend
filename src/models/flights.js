@@ -8,7 +8,7 @@ const FlightSchema = new Schema({
   departure_time: { type: Date, required: true },
   arrival_time: { type: Date, required: true },
   book_exp: { type: Date, required: true }, 
-  aircraft_id: { type: ObjectId, ref: "Aircraft" }, 
+  aircraft_id: { type: ObjectId, ref: "Aircrafts" }, 
 });
 
 const Flight = model("Flight", FlightSchema);
