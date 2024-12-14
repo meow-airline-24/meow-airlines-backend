@@ -1,11 +1,22 @@
-import express, { Router } from "express";
-import { createBookings, checkBookings, checkBookingsHistory } from "../../controllers/booking.js";
+import { Router } from "express";
+import {
+  createBookings,
+  getBookingById,
+  checkBookingsHistory,
+} from "../../controllers/booking.js";
 import CA from "../../exceptions/catchAsync.js";
-const bookingsRouter = Router();
+import userMustHaveLoggedIn from "../../middleware/userMustHaveLoggedIn.js";
 
-bookingsRouter.post("/create", CA(createBookings));
-bookingsRouter.get("/:bookingId", CA(checkBookings));
-bookingsRouter.get("/history", CA(checkBookingsHistory));
+const bookingRouter = Router();
 
-export default bookingsRouter;
+bookingRouter.post("/create", CA(userMustHaveLoggedIn), CA(createBookings));
 
+bookingRouter.get(
+  "/history",
+  CA(userMustHaveLoggedIn),
+  CA(checkBookingsHistory)
+);
+
+bookingRouter.get("/:bookingId", CA(getBookingById));
+
+export default bookingRouter;
