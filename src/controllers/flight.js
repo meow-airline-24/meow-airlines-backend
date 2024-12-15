@@ -41,6 +41,35 @@ export async function createFlight(req, res) {
   }
 }
 
+export async function updateFlight(req, res) {
+  const { _id, flight_number, airline, departure_airport, arrival_airport, departure_time, 
+    arrival_time, book_exp, aircraft_id } = req.body;
+
+  try {
+    let flight = await Flight.findById(_id);
+    if (!flight && flight_number) {
+      flight = await Flight.findOne({ flight_number });
+    }
+    if (!flight) {
+      return res.status(404).json({ message: "Flight not found!" });
+    }
+    flight.flight_number = flight_number || flight.flight_number;  // if user didnt fill, use old value
+    flight.airline = airline || flight.airline;
+    flight.departure_airport = departure_airport || flight.departure_airport;
+    flight.arrival_airport = arrival_airport || flight.arrival_airport;
+    flight.departure_time = departure_time || flight.departure_time;
+    flight.arrival_time = arrival_time || flight.arrival_time;
+    flight.book_exp = book_exp || flight.book_exp;
+    flight.aircraft_id = aircraft_id || flight.aircraft_id;
+    const updatedFlight = await flight.save();
+    res.status(200).json(updatedFlight);
+  } catch (error) {
+    console.error("Error updating flight:", error);
+    res.status(500).json({ message: "Internal Server Error." });
+  }
+}
+
+
 export async function getFlightInfoById(req, res) {
   const { flightId } = req.params;
   if (!flightId || typeof flightId !== "string")

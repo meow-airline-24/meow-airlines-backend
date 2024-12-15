@@ -3,6 +3,7 @@ import {
   createFlight,
   getFlightInfoById,
   searchFlight,
+  updateFlight,
 } from "../../controllers/flight.js";
 import CA from "../../exceptions/catchAsync.js";
 import userMustHaveLoggedIn from "../../middleware/userMustHaveLoggedIn.js";
@@ -14,8 +15,17 @@ flightRouter.post("/search", CA(searchFlight));
 
 flightRouter.post(
   "/create",
+  CA(userMustHaveLoggedIn),
+  CA(requireAdminRole),
   CA(createFlight)
 );
+
+flightRouter.post(
+  "/edit",
+  CA(userMustHaveLoggedIn),
+  CA(requireAdminRole),
+  CA(updateFlight)
+)
 
 flightRouter.get("/:flightId", CA(getFlightInfoById));
 

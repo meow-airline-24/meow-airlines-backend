@@ -16,6 +16,6 @@ const UserSchema = new Schema({
   country_code: { type: Number },
   phone: { type: String },
 });
-
+ 
 const User = model("User", UserSchema);
 export default User;
