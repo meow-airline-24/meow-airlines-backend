@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTicket, publicSearchTicket, searchTicketAuth, updateTicket } from "../../controllers/ticket.js";
+import { createTicket, publicSearchTicket, searchTicketAuth, updateTicket, publicEditTicket } from "../../controllers/ticket.js";
 import CA from "../../exceptions/catchAsync.js";
 import userMustHaveLoggedIn from "../../middleware/userMustHaveLoggedIn.js";
 import requireAdminRole from "../../middleware/requireAdminRole.js";
@@ -19,7 +19,7 @@ ticketRouter.post(
 )
 
 ticketRouter.post(
-    "/public_search",
+    "/public-search",
     CA(publicSearchTicket)
 )
 
@@ -27,6 +27,11 @@ ticketRouter.post(
     "/search",
     CA(userMustHaveLoggedIn),
     CA(searchTicketAuth)
+)
+
+ticketRouter.post(
+    "/public-edit",
+    CA(publicEditTicket)
 )
 
 export default ticketRouter;

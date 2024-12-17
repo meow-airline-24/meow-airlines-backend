@@ -12,6 +12,7 @@ const TicketSchema = new Schema({
   gender: { type: Boolean, required: true },
   id_type: { type: String, enum: ["nin", "passport"], required: true },
   id_number: { type: String, required: true },
+  issuing_date: { type: Date, default: Date.now }, // ticket count (yearly), created AT
   country_code: { type: Number, required: true },
   seat_id: [{ type: ObjectId, ref: "Seat", required: true }],
 });

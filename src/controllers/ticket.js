@@ -97,5 +97,26 @@ export async function searchTicketAuth (req, res) { // return list[Ticket]
   }
 }
 
+export async function publicEditTicket (req, res) {
+  try {
+    const { id_type, id_number, status, passenger_name, dob, gender, country_code } = req.body;
+    let ticket = Ticket.findOne({ id_type, id_number });
+    if (!ticket) {
+      throw new HttpException(404, `Ticket with id number ${id_number} of type ${id_type} not found.`);
+    }
+    ticket.status = status || ticket.status;
+    ticket.passenger_name = passenger_name || ticket.passenger_name;
+    ticket.dob = dob || ticket.dob;
+    ticket.gender = gender || ticket.gender;
+    ticket.country_code = country_code || ticket.country_code;
+    const newTicket = await ticket.save();
+    console.log("New ticket: ", newTicket);
+    return res.status(201).json(newTicket);
+  } catch (error) {
+    console.log("Error with publicEditTicket: ", error);
+    return res.status(500).json({ message: "Internal Server Error." });
+  }
+}
+
 export default { createTicket }; // vì booking :)
 // SyntaxError: The requested module '../controllers/ticket.js' does not provide an export named 'default'
