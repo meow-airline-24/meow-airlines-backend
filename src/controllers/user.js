@@ -14,7 +14,17 @@ export async function getSelfUserInfo(req, res) {
 }
 
 export async function createUser(req, res) {
-  const { email, password, name, gender, id_type, id_number } = req.body;
+  const {
+    email,
+    password,
+    name,
+    gender,
+    dob,
+    id_type,
+    id_number,
+    country_code,
+    phone,
+  } = req.body;
 
   if (await User.findOne({ email })) {
     throw new HttpException(409, "Email already registered.");
@@ -31,6 +41,9 @@ export async function createUser(req, res) {
     gender,
     id_type,
     id_number,
+    dob,
+    country_code,
+    phone,
   });
 
   newUser = newUser.toObject();
@@ -40,7 +53,7 @@ export async function createUser(req, res) {
 }
 
 export async function updateUser(req, res) {
-  const { email, password, name, gender, id_type, id_number } = req.body;
+  const { email, name, gender, id_type, id_number } = req.body;
   const loggedInUser = req.user;
 
   // Validation rules for unique fields
@@ -64,9 +77,9 @@ export async function updateUser(req, res) {
   }
 
   // Special logic for password
-  if (password) {
-    loggedInUser.pwhash = await hash(password);
-  }
+  // if (password) {
+  //   loggedInUser.pwhash = await hash(password);
+  // }
 
   // General updates for other fields
   const updatableFields = { email, name, gender, id_type, id_number };
