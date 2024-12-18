@@ -10,7 +10,10 @@ export async function createBookings(req, res) {
 
     // Validate request body
     if (!itinerary || !Array.isArray(itinerary) || itinerary.length === 0) {
-      throw new HttpException(400, "Itinerary must contain at least one flight.");
+      throw new HttpException(
+        400,
+        "Itinerary must contain at least one flight."
+      );
     }
     if (!passengers || !Array.isArray(passengers) || passengers.length === 0) {
       throw new HttpException(400, "At least one passenger is required.");
@@ -21,7 +24,11 @@ export async function createBookings(req, res) {
     if (!type) {
       throw new HttpException(400, "Type information is incomplete.");
     }
-    if (!flightClass) {
+    if (
+      !flightClass ||
+      !Array.isArray(flightClass) ||
+      flightClass.length != itinerary.length
+    ) {
       throw new HttpException(400, "Flight class information is incomplete.");
     }
 
@@ -36,13 +43,19 @@ export async function createBookings(req, res) {
     // Validate passengers
     for (const passenger of passengers) {
       const { name, dob, gender, id_type, id_number, country_code } = passenger;
-      if (!name || !dob || gender == undefined || !id_type || !id_number || !country_code) {
+      if (
+        !name ||
+        !dob ||
+        gender == undefined ||
+        !id_type ||
+        !id_number ||
+        !country_code
+      ) {
         throw new HttpException(400, "Passenger information is incomplete.");
       }
     }
 
     let totalAmount = 0;
-    const seatArraysForTickets = [];
 
     // Initialize booking object
     const booking = new Booking({
@@ -58,29 +71,31 @@ export async function createBookings(req, res) {
     // Process each passenger and reserve seats
     for (const passenger of passengers) {
       let seatArray = [];
-      for (const flight_id of itinerary) {
-        console.log(`Finding seat for flight ID: ${flight_id}, class: ${flightClass}`);
+      for (const [index, flight_id] of itinerary.entries()) {
+        console.log(
+          `Finding seat for flight ID: ${flight_id}, class: ${flightClass}`
+        );
         const seat = await Seat.findOne({
           flight_id: flight_id,
-          class: flightClass,
+          class: flightClass[index],
           availability: true,
         });
 
         if (!seat) {
           console.error(`Error: No available seat for flight ${flight_id}`);
-          throw new HttpException(400, `Seat is not available for flight ID ${flight_id}.`);
+          throw new HttpException(
+            400,
+            `Seat is not available for flight ID ${flight_id}.`
+          );
         }
 
         console.log(`Seat found: ${seat._id} (Price: ${seat.price})`);
         seatArray.push(seat._id);
         totalAmount += seat.price;
-        seat.availability = false; // Mark seat as unavailable temporarily
+        seat.availability = false;
         await seat.save();
         console.log(`Seat ${seat._id} saved with updated availability.`);
       }
-
-      // Save seat arrays for debugging tickets
-      seatArraysForTickets.push(seatArray);
 
       console.log(`Creating ticket for passenger: ${passenger.name}`);
       await createTicket(
@@ -104,10 +119,11 @@ export async function createBookings(req, res) {
     res.status(200).json(booking);
   } catch (error) {
     console.error("Error in createBookings:", error.message, error.stack);
-    res.status(error.status || 500).json({ message: error.message || "Internal Server Error" });
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || "Internal Server Error" });
   }
 }
-
 
 export async function getBookingById(req, res) {
   const { bookingId } = req.params;

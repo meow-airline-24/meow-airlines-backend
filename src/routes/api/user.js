@@ -14,7 +14,7 @@ userRouter.post("/register", CA(createUser));
 
 userRouter.post("/edit", CA(userMustHaveLoggedIn), CA(updateUser));
 
-userRouter.post("/delete", CA(userMustHaveLoggedIn), CA(deleteUser));
+userRouter.delete("/delete", CA(userMustHaveLoggedIn), CA(deleteUser));
 
 userRouter.get("/info", CA(userMustHaveLoggedIn), CA(getSelfUserInfo));
 
