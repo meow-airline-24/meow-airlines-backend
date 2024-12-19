@@ -156,6 +156,10 @@ export async function searchFlight(req, res) {
         //console.log(`${seatClass} seats:`,classSeats.length,`Price:`,prices[seatClass]);
       }
 
+      if (Object.values(prices).every(price => price === null)) {
+        throw new HttpException(409, `Could not find a flight with enough seats for ${number_people} passengers!`);
+      }
+
       results.push({
         flight: {
           id: flight._id,
