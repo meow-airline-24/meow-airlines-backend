@@ -1,7 +1,8 @@
 import { Schema, model, ObjectId } from "mongoose";
 
 const SeatSchema = new Schema({
-  flight_id: { type: ObjectId, ref: "Flight", required: true },
+  flight_id: { type: ObjectId, ref: "Flight" },
+  aircraft_id: { type: ObjectId, ref: "Aircraft", required: true },
   seat_number: { type: String, required: true },
   class: {
     type: String,

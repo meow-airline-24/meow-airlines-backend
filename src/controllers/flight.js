@@ -1,6 +1,7 @@
 import Flight from "../models/flights.js";
 import HttpException from "../exceptions/HttpException.js";
 import Seat from "../models/seats.js";
+import Aircraft from "../models/aircrafts.js";
 
 export async function createFlight(req, res) {
   const {
@@ -29,6 +30,11 @@ export async function createFlight(req, res) {
 
     res.status(201).json(newFlight);
     console.log("Created flight:", newFlight);
+    const result = await Seat.updateMany(
+      { aircraft_id: aircraft_id }, 
+      { $set: { flight_id: newFlight._id } } 
+    );
+    console.log(`Updated flight ID for ${result.nModified} seats.`);
   } catch (error) {
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {}).join(", ");
