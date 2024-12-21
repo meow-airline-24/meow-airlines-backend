@@ -91,8 +91,17 @@ export async function createFlight(req, res) {
 }
 
 export async function updateFlight(req, res) {
-  const { _id, flight_number, airline, departure_airport, arrival_airport, departure_time, 
-    arrival_time, book_exp, aircraft_id } = req.body;
+  const {
+    _id,
+    flight_number,
+    airline,
+    departure_airport,
+    arrival_airport,
+    departure_time,
+    arrival_time,
+    book_exp,
+    aircraft_id,
+  } = req.body;
 
   try {
     let flight = await Flight.findById(_id);
@@ -102,7 +111,7 @@ export async function updateFlight(req, res) {
     if (!flight) {
       return res.status(404).json({ message: "Flight not found!" });
     }
-    flight.flight_number = flight_number || flight.flight_number;  // if user didnt fill, use old value
+    flight.flight_number = flight_number || flight.flight_number; // if user didnt fill, use old value
     flight.airline = airline || flight.airline;
     flight.departure_airport = departure_airport || flight.departure_airport;
     flight.arrival_airport = arrival_airport || flight.arrival_airport;
@@ -117,7 +126,6 @@ export async function updateFlight(req, res) {
     res.status(500).json({ message: "Internal Server Error." });
   }
 }
-
 
 export async function getFlightInfoById(req, res) {
   const { flightId } = req.params;
@@ -205,8 +213,11 @@ export async function searchFlight(req, res) {
         //console.log(`${seatClass} seats:`,classSeats.length,`Price:`,prices[seatClass]);
       }
 
-      if (Object.values(prices).every(price => price === null)) {
-        throw new HttpException(409, `Could not find a flight with enough seats for ${number_people} passengers!`);
+      if (Object.values(prices).every((price) => price === null)) {
+        throw new HttpException(
+          409,
+          `Could not find a flight with enough seats for ${number_people} passengers!`
+        );
       }
 
       results.push({
@@ -244,3 +255,8 @@ export async function searchFlight(req, res) {
 //         }
 //     });
 // }
+
+export async function getAllFlight() {
+  const flights = await Flight.find();
+  res.status(200).json(flights);
+}
