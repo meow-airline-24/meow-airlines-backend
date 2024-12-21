@@ -3,6 +3,7 @@ import Flight from "../models/flights.js";
 import Seat from "../models/seats.js";
 import HttpException from "../exceptions/HttpException.js";
 import { createTicket } from "../controllers/ticket.js";
+import { sendEmail } from "./email.js";
 
 export async function createBookings(req, res) {
   try {
@@ -115,7 +116,7 @@ export async function createBookings(req, res) {
     console.log("Finalizing booking:", booking);
     await booking.save();
     console.log("Booking saved successfully:", booking);
-
+    await sendEmail(booking._id, email);
     res.status(200).json(booking);
   } catch (error) {
     console.error("Error in createBookings:", error.message, error.stack);
