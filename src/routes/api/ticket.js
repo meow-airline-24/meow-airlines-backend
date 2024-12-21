@@ -14,6 +14,7 @@ ticketRouter.post(
 
 ticketRouter.post(
     "/edit",
+    CA(userMustHaveLoggedIn),
     CA(requireAdminRole),
     CA(updateTicket)
 )
@@ -36,6 +37,8 @@ ticketRouter.post(
 
 ticketRouter.get(
     "/count",
+    CA(userMustHaveLoggedIn),
+    CA(requireAdminRole),
     CA(ticketCount)
 )
 
