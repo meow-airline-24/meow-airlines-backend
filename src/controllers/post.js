@@ -30,3 +30,8 @@ export async function getPostById(req, res) {
 
   return res.status(200).json(post);
 }
+
+export async function getAllPosts(req, res) {
+  const posts = await Post.find({}, "title _id");
+  res.status(200).json(posts);
+}
