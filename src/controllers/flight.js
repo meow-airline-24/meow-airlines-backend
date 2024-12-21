@@ -2,6 +2,9 @@ import Flight from "../models/flights.js";
 import HttpException from "../exceptions/HttpException.js";
 import Seat from "../models/seats.js";
 import Aircraft from "../models/aircrafts.js";
+import AircraftModel from "../models/aircraft_models.js";
+import { createSeats } from "../controllers/seat.js";
+
 
 export async function createFlight(req, res) {
   const {
@@ -14,7 +17,7 @@ export async function createFlight(req, res) {
     book_exp,
     aircraft_id,
   } = req.body;
-
+// lúc tạo flight thì có aircraft id, ô tra xem model nó là j, xong từ model lấy size, r tạo 1 đống seat với flight id đó thôi
   try {
     // Create a new flight
     const newFlight = await Flight.create({
@@ -30,11 +33,51 @@ export async function createFlight(req, res) {
 
     res.status(201).json(newFlight);
     console.log("Created flight:", newFlight);
-    const result = await Seat.updateMany(
-      { aircraft_id: aircraft_id }, 
-      { $set: { flight_id: newFlight._id } } 
-    );
-    console.log(`Updated flight ID for ${result.nModified} seats.`);
+    const aircraft = await Aircraft.findById(aircraft_id);
+    if (!aircraft) {
+      throw new HttpException(404, `Can't find aircraft of ${aircraft_id}`);
+    }
+    const { model } = aircraft; 
+    const aircraftModel = await AircraftModel.findOne({model_name: model});
+    const { rows, columns } = aircraftModel;
+
+    console.log(`First Class: ${rows[0]} rows, ${columns[0]} columns`);
+    console.log(`Business Class: ${rows[1]} rows, ${columns[1]} columns`);
+    console.log(`Economy Class: ${rows[2]} rows, ${columns[2]} columns`);
+    const createdSeats = [];
+    let aircraft_next_row = 1;
+      
+    // Seat Class: First
+    for (let i = aircraft_next_row; i <= rows[0]; i++) {
+      for (let j = 0; j < columns[0]; j++) {
+        const seatNumber = `${String.fromCharCode(65 + j)}${i}`;
+        const createdSeat = await createSeats(newFlight._id, aircraft_id, seatNumber, 'First', true, 5000);
+        createdSeats.push(createdSeat);
+      }
+    }
+    aircraft_next_row = aircraft_next_row + rows[0];
+    // Seat Class: Business
+    let business_row_end = rows[0] + rows[1];
+    for (let i = aircraft_next_row; i <= business_row_end; i++) {
+      for (let j = 0; j < columns[1]; j++) {
+        const seatNumber = `${String.fromCharCode(65 + j)}${i}`;
+        const createdSeat = await createSeats(newFlight._id, aircraft_id, seatNumber, 'Business', true, 3000);
+        createdSeats.push(createdSeat);
+      }
+    }
+    aircraft_next_row = aircraft_next_row + rows[1];
+    let economy_row_end = business_row_end + rows[2];
+    // Seat Class: Economy
+    for (let i = aircraft_next_row; i <= economy_row_end; i++) {
+      for (let j = 0; j < columns[2]; j++) {
+        const seatNumber = `${String.fromCharCode(65 + j)}${i}`;
+        const createdSeat = await createSeats(newFlight._id, aircraft_id, seatNumber, 'Economy', true, 1000);
+        createdSeats.push(createdSeat);
+      }
+    }
+      
+    console.log(`Seats created for flightid ${newFlight._id}: ${createdSeats.length}`);
+
   } catch (error) {
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {}).join(", ");

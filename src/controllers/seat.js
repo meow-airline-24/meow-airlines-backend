@@ -2,6 +2,7 @@ import Seat from "../models/seats.js";
 import HttpException from "../exceptions/HttpException.js";
 import Flight from "../models/flights.js";
 import { mongoose, Types } from "mongoose";
+import Aircraft from "../models/aircrafts.js";
 
 export async function createSeatsForFlightId(req, res) {
   const {
@@ -48,11 +49,11 @@ export async function createSeatsForFlightId(req, res) {
   }
 }
 
-export async function createSeats(aircraft_id, seat_number, seatClass, availability, price) { // tạo ghế cho máy bay
+export async function createSeats(flight_id, aircraft_id, seat_number, seatClass, availability, price) { // tạo ghế cho máy bay
   try {
     // Create a new seat
     const newSeat = await Seat.create({
-      flight_id: null,
+      flight_id,
       aircraft_id: aircraft_id,
       seat_number,
       class: seatClass,
