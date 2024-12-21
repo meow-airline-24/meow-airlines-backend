@@ -1,6 +1,8 @@
 import Ticket from "../models/tickets.js";
 import HttpException from "../exceptions/HttpException.js";
 import Booking from "../models/bookings.js";
+import Seat from "../models/seats.js";
+import Flight from "../models/flights.js";
 
 export async function createTicket(
   reqOrBookingId,
@@ -75,12 +77,47 @@ export async function updateTicket(req, res) {
     id_type,
     id_number,
     country_code,
-    seat_id,
+    cancel, 
   } = req.body;
   try {
-    let ticket = Ticket.findById(_id);
+    let ticket = await Ticket.findById(_id);
     if (!ticket) {
       throw new HttpException(409, "Ticket doesn't exist!");
+    }
+    const { seat_id } = ticket; 
+    const allFlightsExpired = await Promise.all(
+      seat_id.map(async (seatId) => {
+        const seat = await Seat.findById(seatId);
+        if (!seat) {
+          throw new HttpException(404, `Seat with ID ${seatId} not found`);
+        }
+
+        const flight = await Flight.findById(seat.flight_id);
+        if (!flight) {
+          throw new HttpException(404, `Flight with ID ${seat.flight_id} not found`);
+        }
+        const { book_exp } = flight;
+        return Date.now() >= new Date(book_exp).getTime(); 
+      })
+    );
+    if (allFlightsExpired.every((expired) => expired)) {
+      throw new HttpException(
+        403,
+        `Cannot update ticket: All associated flights have expired. Ticket ID: ${ticket._id}`
+      );
+    }
+    if (cancel) {
+      ticket.status = "canceled";
+      const updatedTicket = await ticket.save();
+      const { seat_id } = updatedTicket;
+      await Seat.updateMany(
+        { _id: { $in: seat_id } }, 
+        { $set: { availability: true } }
+      );
+      return res.status(200).json({
+        message: "Ticket canceled successfully",
+        ticket: updatedTicket,
+      });
     }
     // ticket.booking_id = booking_id || ticket.booking_id; t k nghĩ là m nên có quyền update booking id
     ticket.status = status || ticket.status;
@@ -94,8 +131,12 @@ export async function updateTicket(req, res) {
     const updatedTicket = await ticket.save();
     return res.status(200).json(updatedTicket);
   } catch (error) {
-    console.log("Error updating ticket: ", error);
-    return res.status(500).json({ message: "Internal Server Error." });
+    console.error("Error updating ticket:", error); // Always log the full error
+    
+    if (error instanceof HttpException) {
+      return res.status(error.status).json({ message: error.message }); // Explicit error forwarding
+    }
+    return res.status(500).json({ message: "Internal Server Error", details: error.message });
   }
 }
 
@@ -139,13 +180,49 @@ export async function publicEditTicket(req, res) {
       dob,
       gender,
       country_code,
+      cancel
     } = req.body;
-    let ticket = Ticket.findOne({ id_type, id_number });
+    let ticket = await Ticket.findOne({ id_type, id_number });
     if (!ticket) {
       throw new HttpException(
         404,
         `Ticket with id number ${id_number} of type ${id_type} not found.`
       );
+    }
+    const { seat_id } = ticket; 
+    const allFlightsExpired = await Promise.all(
+      seat_id.map(async (seatId) => {
+        const seat = await Seat.findById(seatId);
+        if (!seat) {
+          throw new HttpException(404, `Seat with ID ${seatId} not found`);
+        }
+
+        const flight = await Flight.findById(seat.flight_id);
+        if (!flight) {
+          throw new HttpException(404, `Flight with ID ${seat.flight_id} not found`);
+        }
+        const { book_exp } = flight;
+        return Date.now() >= new Date(book_exp).getTime(); 
+      })
+    );
+    if (allFlightsExpired.every((expired) => expired)) {
+      throw new HttpException(
+        403,
+        `Cannot update ticket: All associated flights have expired. Ticket ID: ${ticket._id}`
+      );
+    }
+    if (cancel) {
+      ticket.status = "canceled";
+      const updatedTicket = await ticket.save();
+      const { seat_id } = updatedTicket;
+      await Seat.updateMany(
+        { _id: { $in: seat_id } }, 
+        { $set: { availability: true } }
+      );
+      return res.status(200).json({
+        message: "Ticket canceled successfully",
+        ticket: updatedTicket,
+      });
     }
     ticket.status = status || ticket.status;
     ticket.passenger_name = passenger_name || ticket.passenger_name;
@@ -156,8 +233,12 @@ export async function publicEditTicket(req, res) {
     console.log("New ticket: ", newTicket);
     return res.status(201).json(newTicket);
   } catch (error) {
-    console.log("Error with publicEditTicket: ", error);
-    return res.status(500).json({ message: "Internal Server Error." });
+    console.error("Error updating ticket:", error); // Always log the full error
+    
+    if (error instanceof HttpException) {
+      return res.status(error.status).json({ message: error.message }); // Explicit error forwarding
+    }
+    return res.status(500).json({ message: "Internal Server Error", details: error.message });
   }
 }
 
