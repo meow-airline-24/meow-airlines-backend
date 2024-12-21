@@ -222,7 +222,7 @@ export async function searchFlight(req, res) {
 
       results.push({
         flight: {
-          id: flight._id,
+          _id: flight._id,
           flight_number: flight.flight_number,
           airline: flight.airline,
           departure_airport: flight.departure_airport,
@@ -256,7 +256,8 @@ export async function searchFlight(req, res) {
 //     });
 // }
 
-export async function getAllFlight() {
+export async function getAllFlight(req, res) {
   const flights = await Flight.find();
+  // console.log("Retrieved all flights:", flights.length);
   res.status(200).json(flights);
 }

@@ -8,7 +8,7 @@ import { sendEmail } from "./email.js";
 export async function createBookings(req, res) {
   try {
     const { itinerary, type, flightClass, email, phone, passengers } = req.body;
-
+    
     // Validate request body
     if (!itinerary || !Array.isArray(itinerary) || itinerary.length === 0) {
       throw new HttpException(

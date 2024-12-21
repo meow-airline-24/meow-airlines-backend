@@ -55,7 +55,7 @@ export async function updateAircraft(req, res) {
   }
 }
 
-export async function getAllAircraft() {
+export async function getAllAircraft(req, res) {
   const aircrafts = await Aircraft.find();
   res.status(200).json(aircrafts);
 }

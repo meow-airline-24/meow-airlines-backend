@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createFlight,
+  getAllFlight,
   getFlightInfoById,
   searchFlight,
   updateFlight,
@@ -25,6 +26,13 @@ flightRouter.post(
   CA(userMustHaveLoggedIn),
   CA(requireAdminRole),
   CA(updateFlight)
+)
+
+flightRouter.get(
+  "/getall",
+  CA(userMustHaveLoggedIn),
+  CA(requireAdminRole),
+  CA(getAllFlight)
 )
 
 flightRouter.get("/:flightId", CA(getFlightInfoById));
