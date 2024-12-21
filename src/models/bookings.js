@@ -6,6 +6,7 @@ const BookingSchema = new Schema({
     enum: ["one-way", "round-trip", "multi-city"],
     required: true,
   },
+  people_number: { type: Number, required: true },
   user_id: { type: ObjectId, ref: "User", required: true },
   flight_id: [{ type: ObjectId, ref: "Flight", required: true }], // Array of flight IDs
   booking_time: { type: Date, default: Date.now },

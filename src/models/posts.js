@@ -3,10 +3,9 @@ import { Schema, model, ObjectId } from "mongoose";
 const PostSchema = new Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  coverImageUrl: { type: String },
   isPublished: { type: Boolean, default: false },
   views: { type: Number, default: 0 },
-  author_id: { type: ObjectId, ref: "Admin", required: true }
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Post = model("Post", PostSchema);

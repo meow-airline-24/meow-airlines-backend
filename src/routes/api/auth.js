@@ -1,11 +1,13 @@
 import { Router } from "express";
-
-import { login, refreshAccessToken } from "../../controllers/auth.js";
+import CA from "../../exceptions/catchAsync.js";
+import { login, refreshAccessToken, logout } from "../../controllers/auth.js";
 
 const authRouter = Router();
 
-authRouter.post("/login", login);
+authRouter.post("/login", CA(login));
 
-authRouter.post("/refresh_access_token", refreshAccessToken);
+authRouter.get("/logout", CA(logout));
+
+authRouter.get("/refresh_access_token", CA(refreshAccessToken));
 
 export default authRouter;
