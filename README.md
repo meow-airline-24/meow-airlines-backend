@@ -1,3 +1,15 @@
+# Meow Airline 24 Backend
+This is a team project for Web application development 2024 course.  
+
+## Who we are
+ - Bùi Tuấn Minh (Project Manager) <https://github.com/Asayami>
+ - Hoàng Minh Nghĩa (UI Designer) <https://github.com/GP-Sword>
+ - Phan Vũ Liêm (Developer) <https://github.com/fior4neee>
+
+## Introduction
+Meow Airline 24 Backend is an airline ticket booking web app.
+We developed two seperated path for normal user and admin.
+
 ## Get started
 0. Clone the project into your local machine.
 1. Create a `.env` file, following `.env.example`.
